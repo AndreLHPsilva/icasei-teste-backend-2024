@@ -26,6 +26,15 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_CREATE_TOPICS: order-topic:3:1
 
+  create-topic:
+    image: wurstmeister/kafka:2.12-2.3.0
+    depends_on:
+      - kafka
+      - zookeeper
+    networks: 
+      - broker-kafka
+    command: ["sh", "-c", "sleep 30 && kafka-topics.sh --create --topic go-to-rails --partitions 1 --replication-factor 1 --if-not-exists --zookeeper zookeeper:2181"]
+
   kafdrop:
     image: obsidiandynamics/kafdrop:latest
     networks: 
@@ -56,14 +65,23 @@ services:
     container_name: ms_go_app
     depends_on:
       - kafka
+      - mongodb
     networks: 
       - broker-kafka
+      - mongo-db
     ports:
       - 3030:3030
 
-
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    networks:
+      - mongo-db
+    ports:
+      - 27017:27017
 
 networks: 
   broker-kafka:
     driver: bridge
-
+  mongo-db:
+    driver: bridge
