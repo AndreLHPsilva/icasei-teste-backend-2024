@@ -9,6 +9,7 @@ module Services
             @params = params
             @request = request
             @new_record = false
+            @existing_product = nil  # Inicializa como nil
           end
 
           def execute
@@ -22,7 +23,12 @@ module Services
               product.brand         = params[:brand]        if params[:brand].present?
               product.price         = params[:price]        if params[:price].present?
               product.description   = params[:description]  if params[:description].present?
-              product.stock         = params[:stock]        if params[:stock].present?
+
+              if params[:stock].present?
+                product.stock = params[:stock]
+              else
+                product.stock = existing_product_stock
+              end
 
               product.save!
 
@@ -44,13 +50,17 @@ module Services
           end
 
           def find_or_initialize_product
-            existing_product = Product.find_by(id: params[:id])
-            if existing_product.present?
-              existing_product
+            @existing_product = Product.find_by(id: params[:id])
+            if @existing_product.present?
+              @existing_product
             else
               @new_record = true
               Product.new
             end
+          end
+
+          def existing_product_stock
+            @existing_product.present? ? @existing_product.stock : 0
           end
         end
       end
