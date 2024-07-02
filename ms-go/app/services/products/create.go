@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"ms-go/app/producers"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -33,6 +35,10 @@ func Create(data models.Product, isAPI bool) (*models.Product, error) {
 	data.CreatedAt = time.Now()
 	data.UpdatedAt = data.CreatedAt
 
+	if data.Stock == 0 {
+    data.Stock = 0
+	}
+
 	_, err := db.Connection().InsertOne(context.TODO(), data)
 
 	if err != nil {
@@ -42,6 +48,21 @@ func Create(data models.Product, isAPI bool) (*models.Product, error) {
 	defer db.Disconnect()
 
 	if isAPI {
+		payload := producers.KafkaPayload{
+			Product: producers.ProductWithoutTimestamps{
+				ID:          data.ID,
+				Name:        data.Name,
+				Brand:       data.Brand,
+				Price:       data.Price,
+				Description: data.Description,
+				Stock:       data.Stock,
+			},
+		}
+	
+		err := producers.ProducerKafka(payload)
+		if err != nil {
+			return nil, err // Trate o erro de acordo com sua lógica de aplicação
+		}
 	}
 
 	return &data, nil

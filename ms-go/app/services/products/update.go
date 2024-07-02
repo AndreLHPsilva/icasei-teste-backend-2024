@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"ms-go/app/producers"
+
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -38,6 +40,21 @@ func Update(data models.Product, isAPI bool) (*models.Product, error) {
 	defer db.Disconnect()
 
 	if isAPI {
+		payload := producers.KafkaPayload{
+			Product: producers.ProductWithoutTimestamps{
+				ID:          data.ID,
+				Name:        data.Name,
+				Brand:       data.Brand,
+				Price:       data.Price,
+				Description: data.Description,
+				Stock:       data.Stock,
+			},
+		}
+	
+		err := producers.ProducerKafka(payload)
+		if err != nil {
+			return nil, err // Trate o erro de acordo com sua lógica de aplicação
+		}
 	}
 
 	return &product, nil
@@ -62,6 +79,10 @@ func setUpdate(new, old *models.Product) {
 
 	if new.Description == "" {
 		new.Description = old.Description
+	}
+
+	if new.Stock == 0 {
+		new.Stock = old.Stock
 	}
 
 	new.CreatedAt = old.CreatedAt
