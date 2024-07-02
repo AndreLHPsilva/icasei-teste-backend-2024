@@ -205,6 +205,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  bigdecimal (~> 3.1.7)
   bootsnap
   debug
   karafka (>= 2.3.0)

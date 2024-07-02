@@ -49,3 +49,5 @@ end
 
 
 gem "karafka", ">= 2.3.0"
+gem 'bigdecimal', '~> 3.1.7'
+
